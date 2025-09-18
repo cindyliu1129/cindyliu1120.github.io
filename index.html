@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>碳權保險與碳價風險模擬平台</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f3f6f8;
+      color: #333;
+    }
+    header {
+      background-color: #1c7c54;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+    section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 1em;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #1c7c54;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #249d72;
+    }
+    .result-block {
+      background: #eef5f1;
+      padding: 15px;
+      border-left: 5px solid #27ae60;
+      margin-top: 20px;
+      line-height: 1.6em;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+      margin-top: 20px;
+    }
+    .chart-title {
+      margin-top: 30px;
+      font-weight: bold;
+      color: #1c7c54;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>碳權保險與碳價風險模擬平台</h1>
+</header>
+
+<main>
+  <section>
+    <h2>為什麼需要碳權保險？</h2>
+    <p>
+      隨著全球淨零碳排政策推進，企業碳權的財務風險逐漸受到關注。特別是製造業，碳排佔全國總量約 <strong>50%</strong> 以上。碳價短期內波動劇烈，可能導致碳權資產價值縮水，對企業財報造成衝擊。透過碳權保險與價格風險管理，可提前對沖下跌風險，保障企業淨零轉型與 ESG 評級。
+    </p>
+  </section>
+
+  <section>
+    <h2>輸入參數</h2>
+    <label for="quantity">購買碳權數量（公噸）</label>
+    <input type="number" id="quantity" value="10000" min="1" />
+
+    <label for="duration">持有期間（月）</label>
+    <select id="duration">
+      <option value="3">3</option>
+      <option value="6" selected>6</option>
+      <option value="12">12</option>
+    </select>
+
+    <label for="industry">產業別</label>
+    <select id="industry">
+      <option value="電子業">電子業</option>
+      <option value="鋼鐵業">鋼鐵業</option>
+      <option value="石化業">石化業</option>
+      <option value="其他">其他製造業</option>
+    </select>
+
+    <label for="strikePrice">可接受最低價格（理賠基準，元/噸）</label>
+    <input type="number" id="strikePrice" value="3000" min="1" />
+
+    <button onclick="runSimulation()">開始模擬與保費試算</button>
+
+    <div id="result" class="result-block" style="display:none;"></div>
+  </section>
+
+  <section>
+    <h2 class="chart-title">價格走勢模擬圖</h2>
+    <canvas id="priceChart"></canvas>
+  </section>
+</main>
+
+<script>
+const SIMULATIONS = 300;
+const TRADING_DAYS_IN_MONTH = 22;
+
+function randn_bm() {
+  let u = 0, v = 0;
+  while(u === 0) u = Math.random();
+  while(v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function simulatePath(S0, mu, sigma, days) {
+  let prices = [S0];
+  for (let t = 1; t <= days; t++) {
+    let dt = 1/252;
+    let drift = (mu - 0.5 * sigma * sigma) * dt;
+    let diffusion = sigma * Math.sqrt(dt) * randn_bm();
+    let nextPrice = prices[t-1] * Math.exp(drift + diffusion);
+    prices.push(nextPrice);
+  }
+  return prices;
+}
+
+function runSimulation() {
+  const quantity = Number(document.getElementById("quantity").value);
+  const duration = Number(document.getElementById("duration").value);
+  const strikePrice = Number(document.getElementById("strikePrice").value);
+  const industry = document.getElementById("industry").value;
+
+  const initialPrice = 3500;
+  const days = duration * TRADING_DAYS_IN_MONTH;
+
+  let mu = 0.02, sigma = 0.3;
+  if (industry === "鋼鐵業") sigma = 0.35;
+  else if (industry === "石化業") sigma = 0.33;
+  else if (industry === "電子業") sigma = 0.28;
+
+  let losses = [], breached = 0, paths = [];
+
+  for (let i = 0; i < SIMULATIONS; i++) {
+    const path = simulatePath(initialPrice, mu, sigma, days);
+    paths.push(path);
+    const minPrice = Math.min(...path);
+    if (minPrice < strikePrice) {
+      let loss = (strikePrice - minPrice) * quantity;
+      losses.push(loss);
+      breached++;
+    } else {
+      losses.push(0);
+    }
+  }
+
+  const probability = (breached / SIMULATIONS * 100).toFixed(1);
+  const expectedLoss = (losses.reduce((a,b) => a+b, 0) / SIMULATIONS).toFixed(0);
+  const basePremium = expectedLoss * 1.05;
+  const cappedPremium = (basePremium * 0.75).toFixed(0);
+  const fixedPremium = (basePremium * 0.55).toFixed(0);
+
+  // 顯示結果
+  const resultBox = document.getElementById("result");
+  resultBox.innerHTML = `
+    📉 碳價跌破保障價格的機率：<strong>${probability}%</strong><br>
+    💸 預期平均損失：<strong>NTD ${Number(expectedLoss).toLocaleString()}</strong><br><br>
+    🛡️ <strong>保險方案建議：</strong><br>
+    ・價格上限協議：<strong>NTD ${Number(basePremium).toLocaleString()}</strong><br>
+    ・固定理賠型：<strong>NTD ${Number(fixedPremium).toLocaleString()}</strong><br>
+    ・比例理賠型：<strong>NTD ${Number(cappedPremium).toLocaleString()}</strong><br><br>
+    🤖 智能合約示意：若碳價低於 NTD ${strikePrice}，將自動啟動理賠機制。
+  `;
+  resultBox.style.display = "block";
+
+  // Chart rendering
+  const ctx = document.getElementById("priceChart").getContext("2d");
+  if (window.priceChartInstance) window.priceChartInstance.destroy();
+
+  const datasets = paths.slice(0, 30).map(path => ({
+    data: path,
+    borderColor: 'rgba(46, 204, 113, 0.2)',
+    borderWidth: 1,
+    pointRadius: 0,
+    fill: false,
+    tension: 0.2
+  }));
+
+  datasets.push({
+    label: "理賠基準線",
+    data: Array(days + 1).fill(strikePrice),
+    borderColor: 'rgba(231, 76, 60, 1)',
+    borderWidth: 2,
+    borderDash: [5, 5],
+    pointRadius: 0,
+    fill: false,
+  });
+
+  window.priceChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: days + 1}, (_, i) => i),
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: '碳價模擬走勢（元/噸）',
+          font: { size: 18 }
+        }
+      },
+      scales: {
+        x: { display: true, title: { display: true, text: '天數' } },
+        y: { display: true, title: { display: true, text: '碳價（元）' } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
