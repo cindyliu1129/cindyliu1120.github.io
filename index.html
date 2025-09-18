@@ -80,6 +80,7 @@
   <h1>碳權保險與碳價風險模擬平台</h1>
 </header>
 
+
 <main>
   <section>
     <h2>為什麼需要碳權保險？</h2>
@@ -180,18 +181,24 @@ function runSimulation() {
   const cappedPremium = (basePremium * 0.75).toFixed(0);
   const fixedPremium = (basePremium * 0.55).toFixed(0);
 
+
   // 顯示結果
-  const resultBox = document.getElementById("result");
-  resultBox.innerHTML = `
-    📉 碳價跌破保障價格的機率：<strong>${probability}%</strong><br>
-    💸 預期平均損失：<strong>NTD ${Number(expectedLoss).toLocaleString()}</strong><br><br>
-    🛡️ <strong>保險方案建議：</strong><br>
-    ・價格上限協議：<strong>NTD ${Number(basePremium).toLocaleString()}</strong><br>
-    ・固定理賠型：<strong>NTD ${Number(fixedPremium).toLocaleString()}</strong><br>
-    ・比例理賠型：<strong>NTD ${Number(cappedPremium).toLocaleString()}</strong><br><br>
-    🤖 智能合約示意：若碳價低於 NTD ${strikePrice}，將自動啟動理賠機制。
-  `;
-  resultBox.style.display = "block";
+const resultBox = document.getElementById("result");
+resultBox.innerHTML = `
+  📉 碳價跌破保障價格的機率：<strong>${probability}%</strong><br>
+  💸 預期平均損失：<strong>NTD ${Number(expectedLoss).toLocaleString()}</strong><br><br>
+  🛡️ <strong>保險方案建議：</strong><br>
+  ・價格上限協議：<strong>NTD ${Number(basePremium).toLocaleString()}</strong><br>
+  ・固定理賠型：<strong>NTD ${Number(fixedPremium).toLocaleString()}</strong><br>
+  ・比例理賠型：<strong>NTD ${Number(cappedPremium).toLocaleString()}</strong><br><br>
+`;
+
+resultBox.innerHTML += `
+  🤖 <strong>智能合約示意：</strong>若碳價低於 NTD ${strikePrice}，將自動啟動理賠機制。
+`;
+resultBox.style.display = "block";
+
+  
 
   // Chart rendering
   const ctx = document.getElementById("priceChart").getContext("2d");
@@ -242,3 +249,4 @@ function runSimulation() {
 </script>
 </body>
 </html>
+
