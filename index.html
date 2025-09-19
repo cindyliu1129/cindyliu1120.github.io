@@ -1,252 +1,481 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>碳權保險與碳價風險模擬平台</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: "Noto Sans TC", sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f3f6f8;
-      color: #333;
-    }
-    header {
-      background-color: #1c7c54;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    main {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-    }
-    section {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 25px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, select {
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>碳價風險試算與保費計算平台</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap');
+
+  body {
+    font-family: "Noto Sans TC", sans-serif;
+    margin: 20px;
+    background: #f5f9f9;
+    color: #2c3e50;
+    line-height: 1.6;
+  }
+  h1, h2, h3 {
+    color: #2c3e50;
+    margin-bottom: 8px;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+  }
+  input[type="number"], select {
+    padding: 8px 10px;
+    width: 240px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+  }
+  input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 5px #27ae60;
+  }
+  small {
+    color: #555;
+    font-size: 0.9em;
+  }
+  button {
+    margin-top: 28px;
+    padding: 12px 28px;
+    background: #27ae60;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1em;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    background: #2ecc71;
+  }
+  button:disabled {
+    background: #a5d6a7;
+    cursor: not-allowed;
+  }
+  .result, .intro, .esgNote {
+    margin-top: 32px;
+    background: white;
+    padding: 22px 30px;
+    border-radius: 8px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  }
+  canvas {
+    max-width: 100%;
+    height: 280px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 18px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  th {
+    background-color: #27ae60;
+    color: white;
+    font-weight: 700;
+  }
+  /* 響應式 */
+  @media (max-width: 600px) {
+    input[type="number"], select {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      font-size: 1em;
     }
     button {
-      margin-top: 20px;
-      background-color: #1c7c54;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 1em;
-      border-radius: 5px;
-      cursor: pointer;
+      width: 100%;
+      padding: 14px 0;
     }
-    button:hover {
-      background-color: #249d72;
-    }
-    .result-block {
-      background: #eef5f1;
-      padding: 15px;
-      border-left: 5px solid #27ae60;
-      margin-top: 20px;
-      line-height: 1.6em;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
-      margin-top: 20px;
-    }
-    .chart-title {
-      margin-top: 30px;
-      font-weight: bold;
-      color: #1c7c54;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-<header>
-  <h1>碳權保險與碳價風險模擬平台</h1>
-</header>
+<h1>碳價風險試算與保費計算平台</h1>
 
+<div class="intro">
+  <h2>為什麼需要碳權保險？</h2>
+  <p>
+    隨著全球淨零碳排的推進，製造業成為台灣碳排放的主要來源，2023年占比達 <strong>50.78%</strong>。  
+    碳價在短期內波動幅度可能超過 <strong>30%</strong>，企業若無風險保障，將面臨重大財務損失。  
+    本平台透過 <strong>AI 模擬</strong> 與 <strong>保費試算</strong>，協助企業降低碳價波動的衝擊，並優化 ESG 財務規劃。
+  </p>
+</div>
 
-<main>
-  <section>
-    <h2>為什麼需要碳權保險？</h2>
-    <p>
-      隨著全球淨零碳排政策推進，企業碳權的財務風險逐漸受到關注。特別是製造業，碳排佔全國總量約 <strong>50%</strong> 以上。碳價短期內波動劇烈，可能導致碳權資產價值縮水，對企業財報造成衝擊。透過碳權保險與價格風險管理，可提前對沖下跌風險，保障企業淨零轉型與 ESG 評級。
-    </p>
-  </section>
+<form id="riskForm" autocomplete="off" novalidate>
+  <label for="quantity">購買碳權數量（噸）：
+    <input type="number" id="quantity" min="1" value="10000" required aria-describedby="quantityHelp" />
+    <small id="quantityHelp">請輸入購買碳權的數量（噸），例如 10000 噸</small>
+  </label>
 
-  <section>
-    <h2>輸入參數</h2>
-    <label for="quantity">購買碳權數量（公噸）</label>
-    <input type="number" id="quantity" value="10000" min="1" />
-
-    <label for="duration">持有期間（月）</label>
-    <select id="duration">
+  <label for="duration">持有期間（月）：
+    <select id="duration" required>
       <option value="3">3</option>
       <option value="6" selected>6</option>
       <option value="12">12</option>
     </select>
+  </label>
 
-    <label for="industry">產業別</label>
-    <select id="industry">
+  <label for="industry">行業別：
+    <select id="industry" required>
       <option value="電子業">電子業</option>
       <option value="鋼鐵業">鋼鐵業</option>
       <option value="石化業">石化業</option>
-      <option value="其他">其他製造業</option>
+      <option value="其他">其他</option>
     </select>
+  </label>
 
-    <label for="strikePrice">可接受最低價格（理賠基準，元/噸）</label>
-    <input type="number" id="strikePrice" value="3000" min="1" />
+  <label for="expectedPriceSelect">預期購買價格（元/噸）：
+    <select id="expectedPriceSelect" aria-describedby="expectedPriceHelp">
+      <option value="custom">自行輸入</option>
+      <option value="3250" selected>台灣市場平均（約 3250 元/噸）</option>
+      <option value="2800">保守估計（2800 元/噸）</option>
+      <option value="4000">高風險預估（4000 元/噸）</option>
+    </select>
+    <input type="number" id="expectedPrice" min="1" value="3250" required style="margin-top: 6px;" aria-describedby="expectedPriceHelp" />
+    <small id="expectedPriceHelp">選擇預設價格或自行輸入預期購買價格（元/噸）</small>
+  </label>
 
-    <button onclick="runSimulation()">開始模擬與保費試算</button>
+  <label for="strikePrice">可接受最低價格（理賠基準，元/噸）：
+    <input type="number" id="strikePrice" min="1" value="2800" required />
+    <small>當碳價跌破此價格，啟動理賠機制</small>
+  </label>
 
-    <div id="result" class="result-block" style="display:none;"></div>
-  </section>
+  <button type="submit" id="submitBtn">開始風險試算</button>
+</form>
 
-  <section>
-    <h2 class="chart-title">價格走勢模擬圖</h2>
-    <canvas id="priceChart"></canvas>
-  </section>
-</main>
+<div class="result" id="result" style="display:none;">
+  <h2>模擬結果與保費試算</h2>
+
+  <h3>市場價格模擬（持有期間價格走勢）</h3>
+  <canvas id="marketPriceChart" aria-label="市場價格模擬走勢圖" role="img"></canvas>
+
+  <h3>碳價風險模擬路徑</h3>
+  <canvas id="priceChart" aria-label="碳價風險模擬路徑圖" role="img"></canvas>
+
+  <p><strong>碳價跌破理賠基準價格的機率：</strong><span id="probability"></span>%</p>
+  <p><strong>預期平均損失：</strong>NTD <span id="expectedLoss"></span></p>
+
+  <h3>保費方案建議</h3>
+  <table aria-label="保費方案建議表格">
+    <thead>
+      <tr>
+        <th>保險方案</th>
+        <th>理賠條件</th>
+        <th>建議保費</th>
+        <th>適合產業/對象</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>保底型</td>
+        <td>碳價低於理賠基準即啟動</td>
+        <td>NTD <span id="premiumBasic"></span></td>
+        <td>鋼鐵、水泥等高碳排產業，重視穩健財務規劃</td>
+      </tr>
+      <tr>
+        <td>區間型</td>
+        <td>跌幅達一定區間啟動理賠</td>
+        <td>NTD <span id="premiumInterval"></span></td>
+        <td>石化、化學等中等風險承受能力的企業</td>
+      </tr>
+      <tr>
+        <td>比例型</td>
+        <td>根據跌幅比例理賠</td>
+        <td>NTD <span id="premiumProportional"></span></td>
+        <td>電子業等具彈性，願意承擔部分風險的企業</td>
+      </tr>
+    </tbody>
+  </table>
+  <button onclick="downloadPDF()" style="margin-top: 20px;">📥 下載 PDF 報告</button>
+</div>
+
+<div class="esgNote" id="esgNote" style="display:none;">
+  <h3>ESG 財務影響提示</h3>
+  <p>
+    根據 IEA 模型，若全球於 2050 年達成淨零目標：<br>
+    電力產業的隱性碳成本將從 <strong>0.03%</strong> 上升至 <strong>18.4%</strong>；<br>
+    天然氣從 <strong>0.02%</strong> 上升至 <strong>17.26%</strong>；<br>
+    燃煤、化學品、礦製品等亦有類似情況。<br><br>
+    👉 若未進行碳權風險管理，企業 ESG 評級與國際供應鏈競爭力將面臨嚴重挑戰。
+  </p>
+</div>
 
 <script>
-const SIMULATIONS = 300;
-const TRADING_DAYS_IN_MONTH = 22;
+  const SIMULATIONS = 1000;
+  const TRADING_DAYS_IN_MONTH = 22;
 
-function randn_bm() {
-  let u = 0, v = 0;
-  while(u === 0) u = Math.random();
-  while(v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-}
-
-function simulatePath(S0, mu, sigma, days) {
-  let prices = [S0];
-  for (let t = 1; t <= days; t++) {
-    let dt = 1/252;
-    let drift = (mu - 0.5 * sigma * sigma) * dt;
-    let diffusion = sigma * Math.sqrt(dt) * randn_bm();
-    let nextPrice = prices[t-1] * Math.exp(drift + diffusion);
-    prices.push(nextPrice);
+  // 產生標準常態分佈數值 (Box-Muller 變換)
+  function randn_bm() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random();
+    while(v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   }
-  return prices;
-}
 
-function runSimulation() {
-  const quantity = Number(document.getElementById("quantity").value);
-  const duration = Number(document.getElementById("duration").value);
-  const strikePrice = Number(document.getElementById("strikePrice").value);
-  const industry = document.getElementById("industry").value;
-
-  const initialPrice = 3500;
-  const days = duration * TRADING_DAYS_IN_MONTH;
-
-  let mu = 0.02, sigma = 0.3;
-  if (industry === "鋼鐵業") sigma = 0.35;
-  else if (industry === "石化業") sigma = 0.33;
-  else if (industry === "電子業") sigma = 0.28;
-
-  let losses = [], breached = 0, paths = [];
-
-  for (let i = 0; i < SIMULATIONS; i++) {
-    const path = simulatePath(initialPrice, mu, sigma, days);
-    paths.push(path);
-    const minPrice = Math.min(...path);
-    if (minPrice < strikePrice) {
-      let loss = (strikePrice - minPrice) * quantity;
-      losses.push(loss);
-      breached++;
-    } else {
-      losses.push(0);
+  // 模擬單一路徑市場價格走勢 (幾何布朗運動)
+  function simulateMarketPrice(S0, mu, sigma, T_days) {
+    let prices = [S0];
+    const dt = 1/252;
+    for(let t=1; t<=T_days; t++) {
+      let drift = (mu - 0.5 * sigma * sigma) * dt;
+      let diffusion = sigma * Math.sqrt(dt) * randn_bm();
+      let nextPrice = prices[t-1] * Math.exp(drift + diffusion);
+      prices.push(nextPrice);
     }
+    return prices;
   }
 
-  const probability = (breached / SIMULATIONS * 100).toFixed(1);
-  const expectedLoss = (losses.reduce((a,b) => a+b, 0) / SIMULATIONS).toFixed(0);
-  const basePremium = expectedLoss * 1.05;
-  const cappedPremium = (basePremium * 0.75).toFixed(0);
-  const fixedPremium = (basePremium * 0.55).toFixed(0);
+  // 蒙地卡羅模擬多路徑價格，計算機率與損失
+  function monteCarloSim(S0, mu, sigma, T_months, strike, quantity) {
+    const T = T_months * TRADING_DAYS_IN_MONTH;
+    let belowStrikeCount = 0;
+    let losses = [];
+    let pricePaths = [];
 
+    for(let sim=0; sim < SIMULATIONS; sim++) {
+      let prices = [S0];
+      for(let t=1; t<=T; t++) {
+        let dt = 1/252;
+        let drift = (mu - 0.5 * sigma * sigma) * dt;
+        let diffusion = sigma * Math.sqrt(dt) * randn_bm();
+        let nextPrice = prices[t-1] * Math.exp(drift + diffusion);
+        prices.push(nextPrice);
+      }
+      pricePaths.push(prices);
 
-  // 顯示結果
-const resultBox = document.getElementById("result");
-resultBox.innerHTML = `
-  📉 碳價跌破保障價格的機率：<strong>${probability}%</strong><br>
-  💸 預期平均損失：<strong>NTD ${Number(expectedLoss).toLocaleString()}</strong><br><br>
-  🛡️ <strong>保險方案建議：</strong><br>
-  ・價格上限協議：<strong>NTD ${Number(basePremium).toLocaleString()}</strong><br>
-  ・固定理賠型：<strong>NTD ${Number(fixedPremium).toLocaleString()}</strong><br>
-  ・比例理賠型：<strong>NTD ${Number(cappedPremium).toLocaleString()}</strong><br><br>
-`;
+      // 損失 = max(0, strike - 持有期末價格) * 數量
+      let endPrice = prices[prices.length - 1];
+      if(endPrice < strike) belowStrikeCount++;
+      losses.push(Math.max(0, strike - endPrice) * quantity);
+    }
 
-resultBox.innerHTML += `
-  🤖 <strong>智能合約示意：</strong>若碳價低於 NTD ${strikePrice}，將自動啟動理賠機制。
-`;
-resultBox.style.display = "block";
+    const prob = (belowStrikeCount / SIMULATIONS * 100).toFixed(2);
+    const avgLoss = (losses.reduce((a,b)=>a+b,0) / SIMULATIONS).toFixed(2);
 
-  
+    return {probability: prob, expectedLoss: avgLoss, pricePaths};
+  }
 
-  // Chart rendering
-  const ctx = document.getElementById("priceChart").getContext("2d");
-  if (window.priceChartInstance) window.priceChartInstance.destroy();
+  // Chart.js 繪圖
+  let priceChart, marketPriceChart;
 
-  const datasets = paths.slice(0, 30).map(path => ({
-    data: path,
-    borderColor: 'rgba(46, 204, 113, 0.2)',
-    borderWidth: 1,
-    pointRadius: 0,
-    fill: false,
-    tension: 0.2
-  }));
+  function plotPriceChart(paths) {
+    const labels = [...Array(paths[0].length).keys()].map(d => `Day ${d}`);
+    const datasets = [];
 
-  datasets.push({
-    label: "理賠基準線",
-    data: Array(days + 1).fill(strikePrice),
-    borderColor: 'rgba(231, 76, 60, 1)',
-    borderWidth: 2,
-    borderDash: [5, 5],
-    pointRadius: 0,
-    fill: false,
+    // 只取前10條路徑畫線，避免圖表過亂
+    for(let i=0; i<Math.min(10, paths.length); i++) {
+      datasets.push({
+        label: `模擬路徑${i+1}`,
+        data: paths[i],
+        borderColor: `rgba(46, 204, 113, ${0.2 + i*0.07})`,
+        fill: false,
+        tension: 0.1,
+        pointRadius: 0
+      });
+    }
+
+    if(priceChart) {
+      priceChart.destroy();
+    }
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    priceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          title: {
+            display: true,
+            text: '碳價風險模擬路徑'
+          }
+        },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  }
+
+  function plotMarketPriceChart(S0, mu, sigma, T_months) {
+    const T = T_months * TRADING_DAYS_IN_MONTH;
+    const labels = [...Array(T+1).keys()].map(d => `Day ${d}`);
+    const prices = simulateMarketPrice(S0, mu, sigma, T);
+
+    if(marketPriceChart) {
+      marketPriceChart.destroy();
+    }
+
+    const ctx = document.getElementById('marketPriceChart').getContext('2d');
+    marketPriceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '市場價格模擬',
+          data: prices,
+          borderColor: 'rgba(52, 152, 219, 0.7)',
+          fill: false,
+          tension: 0.1,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          title: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  }
+
+  // 保費計算（簡化示範）
+  function calculatePremiums(expectedLoss) {
+    // 基本方案收取 15% 預期損失作為保費
+    // 區間型方案收取 12%
+    // 比例型方案收取 10%
+    return {
+      premiumBasic: (expectedLoss * 0.15).toFixed(2),
+      premiumInterval: (expectedLoss * 0.12).toFixed(2),
+      premiumProportional: (expectedLoss * 0.10).toFixed(2)
+    };
+  }
+
+  // 表單元素綁定
+  const form = document.getElementById('riskForm');
+  const resultDiv = document.getElementById('result');
+  const probabilityEl = document.getElementById('probability');
+  const expectedLossEl = document.getElementById('expectedLoss');
+  const premiumBasicEl = document.getElementById('premiumBasic');
+  const premiumIntervalEl = document.getElementById('premiumInterval');
+  const premiumProportionalEl = document.getElementById('premiumProportional');
+
+  const quantityInput = document.getElementById('quantity');
+  const durationSelect = document.getElementById('duration');
+  const expectedPriceInput = document.getElementById('expectedPrice');
+  const expectedPriceSelect = document.getElementById('expectedPriceSelect');
+  const strikePriceInput = document.getElementById('strikePrice');
+
+  expectedPriceSelect.addEventListener('change', () => {
+    if (expectedPriceSelect.value === 'custom') {
+      expectedPriceInput.disabled = false;
+      expectedPriceInput.value = '';
+      expectedPriceInput.focus();
+    } else {
+      expectedPriceInput.disabled = true;
+      expectedPriceInput.value = expectedPriceSelect.value;
+    }
   });
 
-  window.priceChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array.from({length: days + 1}, (_, i) => i),
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: '碳價模擬走勢（元/噸）',
-          font: { size: 18 }
-        }
-      },
-      scales: {
-        x: { display: true, title: { display: true, text: '天數' } },
-        y: { display: true, title: { display: true, text: '碳價（元）' } }
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // 簡單驗證
+    const quantity = Number(quantityInput.value);
+    const duration = Number(durationSelect.value);
+    const expectedPrice = Number(expectedPriceInput.value);
+    const strikePrice = Number(strikePriceInput.value);
+
+    if (isNaN(quantity) || quantity <= 0) {
+      alert('請輸入正確的購買碳權數量');
+      return;
+    }
+    if (isNaN(duration) || duration <= 0) {
+      alert('請選擇持有期間');
+      return;
+    }
+    if (isNaN(expectedPrice) || expectedPrice <= 0) {
+      alert('請輸入正確的預期購買價格');
+      return;
+    }
+    if (isNaN(strikePrice) || strikePrice <= 0) {
+      alert('請輸入正確的理賠基準價格');
+      return;
+    }
+    if (strikePrice > expectedPrice) {
+      alert('理賠基準價格不可高於預期購買價格');
+      return;
+    }
+
+    // 簡單市場參數設定（可再依行業調整）
+    const mu = 0.05; // 預期年化報酬率約5%
+    const sigma = 0.3; // 年化波動率30%
+
+    // 蒙地卡羅模擬
+    const simResult = monteCarloSim(expectedPrice, mu, sigma, duration, strikePrice, quantity);
+
+    // 顯示結果
+    probabilityEl.textContent = simResult.probability;
+    expectedLossEl.textContent = simResult.expectedLoss;
+
+    const premiums = calculatePremiums(simResult.expectedLoss);
+    premiumBasicEl.textContent = premiums.premiumBasic;
+    premiumIntervalEl.textContent = premiums.premiumInterval;
+    premiumProportionalEl.textContent = premiums.premiumProportional;
+
+    // 繪圖
+    plotPriceChart(simResult.pricePaths);
+    plotMarketPriceChart(expectedPrice, mu, sigma, duration);
+
+    resultDiv.style.display = 'block';
+
+    // 滾動到結果區塊
+    resultDiv.scrollIntoView({behavior: 'smooth'});
+  });
+
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const report = document.getElementById("result");
+
+    const canvas = await html2canvas(report, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    if (imgHeight < pdfHeight) {
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    } else {
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      while (heightLeft > 0) {
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        position -= pdfHeight;
+        if (heightLeft > 0) pdf.addPage();
       }
     }
-  });
-}
+
+    pdf.save("碳價風險報告.pdf");
+  }
 </script>
+
 </body>
 </html>
-
