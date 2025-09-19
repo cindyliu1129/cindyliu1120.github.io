@@ -170,37 +170,36 @@
   <p><strong>預期平均損失：</strong>NTD <span id="expectedLoss"></span></p>
 
   <h3>保費方案建議</h3>
-  <table aria-label="保費方案建議表格">
-    <thead>
-      <tr>
-        <th>保險方案</th>
-        <th>理賠條件</th>
-        <th>建議保費</th>
-        <th>適合產業/對象</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>保底型</td>
-        <td>碳價低於理賠基準即啟動</td>
-        <td>NTD <span id="premiumBasic"></span></td>
-        <td>鋼鐵、水泥等高碳排產業，重視穩健財務規劃</td>
-      </tr>
-      <tr>
-        <td>區間型</td>
-        <td>跌幅達一定區間啟動理賠</td>
-        <td>NTD <span id="premiumInterval"></span></td>
-        <td>石化、化學等中等風險承受能力的企業</td>
-      </tr>
-      <tr>
-        <td>比例型</td>
-        <td>根據跌幅比例理賠</td>
-        <td>NTD <span id="premiumProportional"></span></td>
-        <td>電子業等具彈性，願意承擔部分風險的企業</td>
-      </tr>
-    </tbody>
-  </table>
+  <table>
+      <thead>
+        <tr><th>選擇</th><th>保險方案</th><th>理賠條件</th><th>保費 (NTD)</th></th><th>適合對象</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="radio" name="plan" value="保底型"></td>
+          <td>保底型</td>
+          <td>跌破基準立即理賠</td>
+          <td>NTD <span id="premiumBasic">-</span></td>
+          <td>鋼鐵、水泥等高碳排</td>
+        </tr>
+        <tr>
+          <td><input type="radio" name="plan" value="區間型"></td>
+          <td>區間型</td>
+          <td>跌幅達特定區間</td>
+          <td>NTD <span id="premiumInterval">-</span></td>
+          <td>石化、化工產業</td>
+        </tr>
+        <tr>
+          <td><input type="radio" name="plan" value="比例型"></td>
+          <td>比例型</td>
+          <td>依跌幅比例理賠</td>
+          <td>NTD <span id="premiumProportional">-</span></td>
+          <td>電子業等願分擔風險</td>
+        </tr>
+      </tbody>
+    </table>
   <button onclick="downloadPDF()" style="margin-top: 20px;">📥 下載 PDF 報告</button>
+	<button id="btnSmart" class="alt">📝 智能保單</button>
 </div>
 
 <div class="esgNote" id="esgNote" style="display:none;">
@@ -458,7 +457,7 @@
 
     const imgWidth = pdfWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
+	const scaleFactor = 0.8
     if (imgHeight < pdfHeight) {
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
     } else {
